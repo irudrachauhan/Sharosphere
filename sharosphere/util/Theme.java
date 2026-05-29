@@ -214,7 +214,6 @@ public class Theme {
                 public void mouseExited(java.awt.event.MouseEvent e)  { hovered = false; repaint(); }
             });
         }
-
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
