@@ -1,5 +1,6 @@
 package sharosphere.ui;
 
+import sharosphere.db.UserDAO;
 import sharosphere.util.Theme;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -42,8 +43,8 @@ public class LoginScreen {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Theme.BG_CARD);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER),
-            BorderFactory.createEmptyBorder(60, 50, 30, 50)
+                BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER),
+                BorderFactory.createEmptyBorder(60, 50, 30, 50)
         ));
 
         // Logo + app name
@@ -71,10 +72,10 @@ public class LoginScreen {
 
         // Feature bullets
         String[][] feats = {
-            {"\uD83D\uDCDA", "Textbooks & Study Materials"},   // 📚
-            {"\uD83D\uDCD0", "CAD Tools & Engineering Kits"},  // 📐
-            {"\uD83D\uDD2C", "Lab Equipment & Calculators"},   // 🔬
-            {"\uD83E\uDD1D", "Free & Paid Listings"},           // 🤝
+                {"\uD83D\uDCDA", "Textbooks & Study Materials"},   // 📚
+                {"\uD83D\uDCD0", "CAD Tools & Engineering Kits"},  // 📐
+                {"\uD83D\uDD2C", "Lab Equipment & Calculators"},   // 🔬
+                {"\uD83E\uDD1D", "Free & Paid Listings"},           // 🤝
         };
         for (String[] f : feats) {
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -95,8 +96,7 @@ public class LoginScreen {
 
         // push version to bottom
         panel.add(Box.createVerticalGlue());
-
-        JLabel ver = new JLabel("v1.0.0  ·  Made for Students");
+        JLabel ver = new JLabel(" ");
         ver.setFont(Theme.fontPlain(11));
         ver.setForeground(Theme.TEXT_MUTED);
         ver.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -137,7 +137,7 @@ public class LoginScreen {
         emailLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JTextField emailField = new JTextField();
-        setPlaceholder(emailField, "you@college.edu");
+        setPlaceholder(emailField, "Email");
         Theme.styleField(emailField);
         emailField.setAlignmentX(Component.LEFT_ALIGNMENT);
         emailField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
@@ -218,6 +218,8 @@ public class LoginScreen {
     private boolean isValidEmail(String email) {
         return email.contains("@") && email.contains(".");
     }
+
+    // ── ONLY THIS METHOD CHANGED: now calls UserDAO instead of jumping straight to dashboard ──
     private void handleLogin(JTextField email, JPasswordField pass) {
         boolean emailIsPlaceholder = Boolean.TRUE.equals(email.getClientProperty("placeholderActive"));
         boolean passIsPlaceholder  = Boolean.TRUE.equals(pass.getClientProperty("placeholderActive"));
@@ -225,7 +227,7 @@ public class LoginScreen {
         String p = passIsPlaceholder  ? "" : new String(pass.getPassword());
         if (e.isEmpty() || p.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "Please fill in all fields.",
-                "Login Error", JOptionPane.WARNING_MESSAGE);
+                    "Login Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (!isValidEmail(e)) {
@@ -235,13 +237,21 @@ public class LoginScreen {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        new MainDashboard(frame, e).show();
+        // ── DB LOGIN ──────────────────────────────────────────────
+        UserDAO userDAO = new UserDAO();
+        if (userDAO.loginUser(e, p)) {
+            new MainDashboard(frame, e).show();
+        } else {
+            JOptionPane.showMessageDialog(frame,
+                    "Invalid email or password.",
+                    "Login Failed",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // ── Static helper styles (used by other classes) ──────────────
 
     public static void setPlaceholder(JTextField tf, String placeholder) {
-        // Use client property as flag so text comparison never interferes with real input
         tf.putClientProperty("placeholder", placeholder);
         tf.putClientProperty("placeholderActive", Boolean.TRUE);
         tf.setText(placeholder);
